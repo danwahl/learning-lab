@@ -6,7 +6,7 @@
 #   dist/skills/<name>.md   one Open WebUI skill per learning-lab technique
 #
 # Sources are the two submodules and web/adaptations.md; dist/ is never
-# hand-edited. Paste the outputs into the admin UI.
+# hand-edited. scripts/seed.py pushes the outputs into a running instance.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
