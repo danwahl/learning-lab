@@ -8,6 +8,17 @@ services:
     env_file: ${ENV_FILE:-.env}
     volumes:
       - data:/app/backend/data
+      # Our icons over the bundled ones. The app recopies its own on boot and logs a
+      # harmless read-only error per file when these mounts stop it.
+      - ./web/icons/favicon.png:/app/backend/open_webui/static/favicon.png:ro
+      - ./web/icons/favicon.ico:/app/backend/open_webui/static/favicon.ico:ro
+      - ./web/icons/favicon-96x96.png:/app/backend/open_webui/static/favicon-96x96.png:ro
+      - ./web/icons/logo.png:/app/backend/open_webui/static/logo.png:ro
+      - ./web/icons/splash.png:/app/backend/open_webui/static/splash.png:ro
+      - ./web/icons/splash-dark.png:/app/backend/open_webui/static/splash-dark.png:ro
+      - ./web/icons/apple-touch-icon.png:/app/backend/open_webui/static/apple-touch-icon.png:ro
+      - ./web/icons/web-app-manifest-192x192.png:/app/backend/open_webui/static/web-app-manifest-192x192.png:ro
+      - ./web/icons/web-app-manifest-512x512.png:/app/backend/open_webui/static/web-app-manifest-512x512.png:ro
 
 volumes:
   data:
