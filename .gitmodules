@@ -1,6 +1,6 @@
 [submodule "cordell"]
 	path = cordell
-	url = git@github.com:danwahl/cordell.git
+	url = https://github.com/danwahl/cordell.git
 [submodule "claude-plugins"]
 	path = claude-plugins
-	url = git@github.com:danwahl/claude-plugins.git
+	url = https://github.com/danwahl/claude-plugins.git

@@ -31,6 +31,7 @@ learning-lab/
 ├─ web/adaptations.md  # what changes when the skills run in a web chat
 ├─ web/reviewer.md     # system prompt for the mentor's Reviewer model
 ├─ web/tools/          # Open WebUI tools: mentors.py (consent), review.py (reading)
+├─ tests/              # pytest against a throwaway instance with a stubbed model
 ├─ scripts/render.sh   # submodules + adaptations -> dist/ (system prompt, skills)
 ├─ scripts/seed.py     # configures a running instance from dist/ and .env
 ├─ compose.yaml        # the open-webui service
@@ -70,6 +71,15 @@ Students sign up at the URL and wait until an admin sets them to "user" in Admin
 ## Mentors
 
 Anyone with an account can be a mentor to anyone who lets them. A student tells Tutor "let dan@example.com review my chats"; Tutor confirms, then the `mentors` tool stores that email on their user record. The mentor picks the Reviewer model and asks about them by email; the `review` tool returns their chats only if their record lists the mentor, and only chats made with Tutor, so a mentor's own Reviewer chats stay hidden from whoever mentors them. "Remove dan@example.com" revokes it. Both checks are in `web/tools/review.py`, not in the prompt. Chats made with the old "cord" model are not reviewable. A mentor needs an approved account of their own.
+
+## Tests
+
+```bash
+pip install pytest && pytest -q tests           # ~2 min; KEEP=1 leaves the instance up
+docker compose -p learning-lab-test down -v     # removes it
+```
+
+The suite brings up a second compose project (`learning-lab-test`, port 3001) from `.env.example`, replaces OpenRouter with a stub inside the container (`tests/stub.py`: one model, a canned reply, a log of every request), renders and seeds it, and checks: seeding is idempotent, signup lands pending and approval unlocks the two presets, both tools and five skills, a chat turn reaches the model with the rendered prompt and the right tool specs, and the consent and leak checks in `web/tools` hold against chats created through the API. GitHub Actions runs it on every push (`.github/workflows/test.yml`). Nothing exercises a real model; that stays a manual check.
 
 ## Exposure (scandium)
 

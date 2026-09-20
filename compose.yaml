@@ -1,11 +1,11 @@
 services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:v0.11.3
-    container_name: learning-lab
+    container_name: ${COMPOSE_PROJECT_NAME:-learning-lab}
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:8080"   # loopback only; Tailscale Funnel fronts it
-    env_file: .env
+      - "127.0.0.1:${PORT:-3000}:8080"   # loopback only; Tailscale Funnel fronts it
+    env_file: ${ENV_FILE:-.env}
     volumes:
       - data:/app/backend/data
 
