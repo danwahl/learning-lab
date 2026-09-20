@@ -180,7 +180,7 @@ def main():
         "base_model_id": model,
         "name": "Tutor",
         "meta": {
-            "description": "Learning tutor. Makes you do the work.",
+            "description": "For students: learn a topic by working it out yourself, one hint at a time.",
             "capabilities": capabilities,
             "builtinTools": {"memory": True},
             "skillIds": skill_ids,
