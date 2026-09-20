@@ -18,14 +18,15 @@ them into an [Open WebUI](https://github.com/open-webui/open-webui) deployment:
 scandium (always-on Docker host)
 ├─ open-webui container  (compose.yaml, SQLite + uploads in a named volume)
 │  ├─ model    = OpenRouter, one pinned model (~z-ai/glm-flash-latest)
-│  ├─ preset   = Workspace Model "Cord": identity + tutor skill as system prompt
+│  ├─ presets  = Workspace Models "Tutor" (identity + tutor skill) and "Review"
 │  ├─ skills   = Workspace Skills, one per learning-lab technique
+│  ├─ tools    = Workspace Tools: mentor consent, chat review (web/tools)
 │  └─ memory   = Open WebUI per-user Memory (the learning plan lives here)
 └─ tailscale funnel :10000 -> 127.0.0.1:3000   (public HTTPS, no open ports)
 ```
 
 Open WebUI supplies login, roles, chat history, memory, KaTeX, and image upload.
-There is no application code here.
+The only application code is two small tool modules.
 
 ## Layout
 
@@ -34,6 +35,8 @@ learning-lab/
 ├─ cordell/            # submodule: identity spec (danwahl/cordell)
 ├─ claude-plugins/     # submodule: skill sources (danwahl/claude-plugins)
 ├─ web/adaptations.md  # what changes when the skills run in a web chat
+├─ web/review.md       # system prompt for the mentor's Review model
+├─ web/tools/          # Open WebUI tools: mentors.py (consent), review.py (reading)
 ├─ scripts/render.sh   # submodules + adaptations -> dist/ (system prompt, skills)
 ├─ scripts/seed.py     # configures a running instance from dist/ and .env
 ├─ compose.yaml        # the open-webui service
@@ -53,9 +56,10 @@ Clone with `--recurse-submodules` (or `git submodule update --init`).
   becomes Open WebUI's memory tools: the learning plan is one memory in the
   plugin's own `plans/<topic>.md` format, searched for at the start of every
   chat and ticked as steps complete.
+- `review-prompt.md`: the identity spec, then `web/review.md`.
 - `skills/<name>.md`: the five technique skills, frontmatter trimmed to
   `name` and `description`, bodies with the same substitutions. They attach to
-  the Cord model and load on demand; the student can also pick one with `$`.
+  the Tutor model and load on demand; the student can also pick one with `$`.
 
 A few harness-specific phrases are substituted in the script; anything else
 is overridden in prose in `adaptations.md`. Re-run after bumping either
@@ -76,16 +80,29 @@ docker compose up -d
 
 `seed.py` registers the admin (first account), points the OpenRouter
 connection at `TUTOR_MODEL` only, hides the base model from the picker while
-keeping it readable by the `students` group, creates the skills and the
-"Cord" model with the rendered prompt, makes Cord the default model, creates
-the student in the group, and turns signup off. Every step creates or
+keeping it readable by the `students` group, creates the skills, the tools,
+and the "Tutor" and "Review" models, makes Tutor the default, creates the
+student in the group, and turns signup off. Every step creates or
 updates, so re-run it after a render. `--help` lists the flags (`--url`,
 `--env`, `--keep-signup-open`).
 
-The student sees a login form (no signup), one model, no chat controls,
+The student sees a login form (no signup), two models, no chat controls,
 no system-prompt or parameter editing, no code interpreter, notes, arena, web
 search or image generation. The admin can read all chats
 (`ENABLE_ADMIN_CHAT_ACCESS`, default true); tell the student.
+
+## Mentors
+
+Anyone with an account can be a mentor to anyone who lets them. A student
+tells Tutor "let dan@example.com review my chats"; Tutor confirms, then the
+`mentors` tool stores that email on her user record. The mentor picks the
+Review model and asks about her by email; the `review` tool returns her
+chats only if her record lists the mentor, and only chats made with Tutor,
+so a mentor's own Review chats stay hidden from whoever mentors them.
+"Remove dan@example.com" revokes it. Both checks are in
+`web/tools/review.py`, not in the prompt. Chats made with the old "cord"
+model are not reviewable. More accounts: Admin > Users, then add them to
+`students`.
 
 ## Exposure (scandium)
 
@@ -115,7 +132,9 @@ docker run --rm -v learning-lab_data:/data -v "$PWD":/backup alpine \
 
 Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. Another
 student: change `STUDENT_*` in `.env` and re-run, or Admin > Users, then add
-to `students`. Another skill: add it to the plugin, render, seed.
+to `students`. Another skill: add it to the plugin, render, seed. Another
+tool: a file in `web/tools/` and its id in the right model's `toolIds` in
+`seed.py`.
 
 ## Open WebUI settings that matter
 

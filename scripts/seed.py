@@ -8,8 +8,9 @@ from .env (or the environment); passwords are prompted for when unset.
 Steps, in order: admin account (signup on first boot, else signin) ->
 OpenRouter connection restricted to TUTOR_MODEL -> base model hidden from the
 picker but readable by the students group -> skills from dist/skills ->
-workspace model "cord" with the rendered system prompt -> "cord" as the
-default model -> student account in the students group -> signup closed.
+tools from web/tools -> workspace models "tutor" (rendered system prompt,
+memory, skills, mentors tool; the default) and "review" (review prompt,
+review tool) -> student account in the students group -> signup closed.
 """
 
 import argparse
@@ -25,7 +26,9 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 DIST = REPO / "dist"
-MODEL_ID = "cord"
+MODEL_ID = "tutor"
+REVIEW_ID = "review"
+TOOLS = REPO / "web" / "tools"
 GROUP = "students"
 SUGGESTIONS = [
     "I want to learn how to factor quadratics",
@@ -157,27 +160,58 @@ def main():
         skill_ids.append(sid)
     print(f"skills: {', '.join(skill_ids)}")
 
-    # 6. the tutor preset
+    # 6. tools: the python in web/tools, one workspace tool per file
+    tool_ids = []
+    have = {t["id"] for t in api.get("/api/v1/tools/")}
+    for path in sorted(TOOLS.glob("*.py")):
+        tid = path.stem
+        content = path.read_text()
+        desc = re.search(r"^description: (.*)$", content, re.M)
+        form = {"id": tid, "name": tid.capitalize(), "content": content, "meta": {"description": desc and desc.group(1)}, "access_grants": grants}
+        api.post(f"/api/v1/tools/id/{tid}/update" if tid in have else "/api/v1/tools/create", form)
+        api.post(f"/api/v1/tools/id/{tid}/access/update", {"access_grants": grants})
+        tool_ids.append(tid)
+    print(f"tools: {', '.join(tool_ids)}")
+
+    # 7. the two presets
+    capabilities = {"vision": True, "file_upload": True, "builtin_tools": True, "web_search": False, "image_generation": False, "code_interpreter": False}
     upsert_model({
         "id": MODEL_ID,
         "base_model_id": model,
-        "name": "Cord",
+        "name": "Tutor",
         "meta": {
             "description": "Learning tutor. Makes you do the work.",
-            "capabilities": {"vision": True, "file_upload": True, "builtin_tools": True, "web_search": False, "image_generation": False, "code_interpreter": False},
+            "capabilities": capabilities,
             "builtinTools": {"memory": True},
             "skillIds": skill_ids,
+            "toolIds": ["mentors"],
             "suggestion_prompts": [{"content": s} for s in SUGGESTIONS],
         },
         "params": {"system": system_prompt, "function_calling": "native"},
         "access_grants": grants,
     })
+    upsert_model({
+        "id": REVIEW_ID,
+        "base_model_id": model,
+        "name": "Review",
+        "meta": {
+            "description": "For mentors: read the tutoring chats of students who added you.",
+            "capabilities": {**capabilities, "builtin_tools": False},
+            "toolIds": ["review"],
+            "suggestion_prompts": [{"content": "What did my student work on this week?"}],
+        },
+        "params": {"system": (DIST / "review-prompt.md").read_text(), "function_calling": "native"},
+        "access_grants": grants,
+    })
+    if api.get("/api/v1/models/model?id=cord", missing=(404,)):
+        api.post("/api/v1/models/model/delete", {"id": "cord"})
+        print("deleted the old cord preset")
     cfg = api.get("/api/v1/configs/models")
     cfg["DEFAULT_MODELS"] = MODEL_ID
     api.post("/api/v1/configs/models", cfg)
-    print(f"model {MODEL_ID} (base {model}, {len(system_prompt.split())} words of system prompt) set as default")
+    print(f"models {MODEL_ID} (default, {len(system_prompt.split())} words of system prompt) and {REVIEW_ID}, base {model}")
 
-    # 7. student
+    # 8. student
     student_email = env.get("STUDENT_EMAIL")
     if student_email:
         users = api.get("/api/v1/users/search?query=" + urllib.parse.quote(student_email))["users"]
@@ -189,7 +223,7 @@ def main():
         api.post(f"/api/v1/groups/id/{group['id']}/users/add", {"user_ids": [user["id"]]})
         print(f"{student_email} in {GROUP}")
 
-    # 8. close the door
+    # 9. close the door
     if not args.keep_signup_open:
         admin = api.get("/api/v1/auths/admin/config")
         admin["ENABLE_SIGNUP"] = False

@@ -67,6 +67,14 @@ The technique skills (`socratic-method`, `feynman-method`, `retrieval-quiz`,
 load the skill and follow its protocol in this same chat. The learner can also
 invoke one directly by typing `$` and picking it.
 
+## Mentors
+
+The learner decides who may read her tutoring chats. When she asks to let
+someone review her work, or to stop them, use the mentor tools
+(`list_mentors`, `add_mentor`, `remove_mentor`) with that person's login
+email. Confirm before adding: a mentor can read every chat she has with you,
+past and future, until removed.
+
 ## Math and images
 
 - Write math in `$$ ... $$` (display) or `\( ... \)` (inline). Single `$`
