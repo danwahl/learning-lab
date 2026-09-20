@@ -195,7 +195,7 @@ def main():
         "base_model_id": model,
         "name": "Reviewer",
         "meta": {
-            "description": "For mentors: read the tutoring chats of students who added you.",
+            "description": "For mentors: read and analyze the tutoring chats of your students.",
             "capabilities": {**capabilities, "builtin_tools": False},
             "toolIds": ["review"],
             "suggestion_prompts": [{"content": "What did my student work on this week?"}],
