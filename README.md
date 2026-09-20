@@ -80,7 +80,7 @@ pip install pytest && pytest -q tests           # ~2 min; KEEP=1 leaves the inst
 docker compose -p learning-lab-test down -v     # removes it
 ```
 
-The suite brings up a second compose project (`learning-lab-test`, port 3001) from `.env.example`, replaces OpenRouter with a stub inside the container (`tests/stub.py`: one model, a canned reply, a log of every request), renders and seeds it, and checks: seeding is idempotent, signup lands pending and approval unlocks the two presets, both tools and five skills, a chat turn reaches the model with the rendered prompt and the right tool specs, and the consent and leak checks in `web/tools` hold against chats created through the API. GitHub Actions runs it on every push (`.github/workflows/test.yml`). Nothing exercises a real model; that stays a manual check.
+The suite brings up a second compose project (`learning-lab-test`, port 3001) from `.env.example`, replaces OpenRouter with a stub inside the container (`tests/stub.py`: one model, a canned reply, a log of every request), renders and seeds it, and checks: seeding is idempotent, signup lands pending and approval unlocks the two presets, both tools and five skills, a chat turn reaches the model with the rendered prompt, the reasoning effort and the right tool specs, and the consent and leak checks in `web/tools` hold against chats created through the API. GitHub Actions runs it on every push (`.github/workflows/test.yml`). Nothing exercises a real model; that stays a manual check.
 
 ## Exposure (scandium)
 

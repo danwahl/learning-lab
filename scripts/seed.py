@@ -29,6 +29,8 @@ REPO = Path(__file__).resolve().parent.parent
 DIST = REPO / "dist"
 MODEL_ID = "tutor"
 REVIEWER_ID = "reviewer"
+# Model params for both presets; at the default effort the model thinks for about a minute per turn.
+PARAMS = {"function_calling": "native", "reasoning_effort": "medium"}
 TOOLS = REPO / "web" / "tools"
 SUGGESTIONS = [
     "I want to learn how to factor quadratics",
@@ -187,7 +189,7 @@ def main():
             "toolIds": ["mentors"],
             "suggestion_prompts": [{"content": s} for s in SUGGESTIONS],
         },
-        "params": {"system": system_prompt, "function_calling": "native"},
+        "params": {"system": system_prompt, **PARAMS},
         "access_grants": grants,
     })
     upsert_model({
@@ -200,7 +202,7 @@ def main():
             "toolIds": ["review"],
             "suggestion_prompts": [{"content": "What did my student work on this week?"}],
         },
-        "params": {"system": (DIST / "reviewer-prompt.md").read_text(), "function_calling": "native"},
+        "params": {"system": (DIST / "reviewer-prompt.md").read_text(), **PARAMS},
         "access_grants": grants,
     })
     for old in ("cord", "review"):  # earlier names of the two presets

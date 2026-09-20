@@ -45,6 +45,7 @@ def chat(api, model):
     assert r["choices"][0]["message"]["content"] == "stub reply"
     req = last_request()
     assert req["model"] == MODEL
+    assert req["reasoning_effort"] == "medium"
     return next(m["content"] for m in req["messages"] if m["role"] == "system"), {t["function"]["name"] for t in req["tools"]}
 
 
