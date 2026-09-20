@@ -4,7 +4,7 @@
 #   dist/system-prompt.md   Workspace Model "Tutor": identity + tutor skill +
 #                           learning science + this deployment's adaptations
 #   dist/skills/<name>.md   one Open WebUI skill per learning-lab technique
-#   dist/review-prompt.md   Workspace Model "Review": identity + web/review.md
+#   dist/reviewer-prompt.md Workspace Model "Reviewer": identity + web/reviewer.md
 #
 # Sources are the two submodules and web/adaptations.md; dist/ is never
 # hand-edited. scripts/seed.py pushes the outputs into a running instance.
@@ -58,7 +58,7 @@ mkdir -p "$dist/skills"
   cat "$repo/web/adaptations.md"
 } > "$dist/system-prompt.md"
 
-{ cat "$identity"; echo; cat "$repo/web/review.md"; } > "$dist/review-prompt.md"
+{ cat "$identity"; echo; cat "$repo/web/reviewer.md"; } > "$dist/reviewer-prompt.md"
 
 for dir in "$plugin"/skills/*/; do
   name="$(basename "$dir")"
@@ -69,5 +69,5 @@ done
 
 ver="$(sed -nE 's/.*version="([^"]+)".*/\1/p' "$identity" | head -n1)"
 echo "rendered dist/system-prompt.md ($(wc -w < "$dist/system-prompt.md") words, identity v$ver)"
-echo "rendered dist/review-prompt.md ($(wc -w < "$dist/review-prompt.md") words)"
+echo "rendered dist/reviewer-prompt.md ($(wc -w < "$dist/reviewer-prompt.md") words)"
 ls "$dist/skills" | sed 's#^#rendered dist/skills/#'

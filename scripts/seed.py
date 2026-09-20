@@ -9,7 +9,7 @@ Steps, in order: admin account (signup on first boot, else signin) ->
 OpenRouter connection restricted to TUTOR_MODEL -> base model hidden from the
 picker but readable by every user -> skills from dist/skills -> tools from
 web/tools -> workspace models "tutor" (rendered system prompt, memory, skills,
-mentors tool; the default) and "review" (review prompt, review tool) ->
+mentors tool; the default) and "reviewer" (reviewer prompt, review tool) ->
 optional STUDENT_* test account -> signup open, new accounts pending until an
 admin approves them.
 """
@@ -28,7 +28,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 DIST = REPO / "dist"
 MODEL_ID = "tutor"
-REVIEW_ID = "review"
+REVIEWER_ID = "reviewer"
 TOOLS = REPO / "web" / "tools"
 SUGGESTIONS = [
     "I want to learn how to factor quadratics",
@@ -191,25 +191,26 @@ def main():
         "access_grants": grants,
     })
     upsert_model({
-        "id": REVIEW_ID,
+        "id": REVIEWER_ID,
         "base_model_id": model,
-        "name": "Review",
+        "name": "Reviewer",
         "meta": {
             "description": "For mentors: read the tutoring chats of students who added you.",
             "capabilities": {**capabilities, "builtin_tools": False},
             "toolIds": ["review"],
             "suggestion_prompts": [{"content": "What did my student work on this week?"}],
         },
-        "params": {"system": (DIST / "review-prompt.md").read_text(), "function_calling": "native"},
+        "params": {"system": (DIST / "reviewer-prompt.md").read_text(), "function_calling": "native"},
         "access_grants": grants,
     })
-    if api.get("/api/v1/models/model?id=cord", missing=(404,)):
-        api.post("/api/v1/models/model/delete", {"id": "cord"})
-        print("deleted the old cord preset")
+    for old in ("cord", "review"):  # earlier names of the two presets
+        if api.get(f"/api/v1/models/model?id={old}", missing=(404,)):
+            api.post("/api/v1/models/model/delete", {"id": old})
+            print(f"deleted the old {old} preset")
     cfg = api.get("/api/v1/configs/models")
     cfg["DEFAULT_MODELS"] = MODEL_ID
     api.post("/api/v1/configs/models", cfg)
-    print(f"models {MODEL_ID} (default, {len(system_prompt.split())} words of system prompt) and {REVIEW_ID}, base {model}")
+    print(f"models {MODEL_ID} (default, {len(system_prompt.split())} words of system prompt) and {REVIEWER_ID}, base {model}")
 
     # 8. optional test student, already approved
     student_email = env.get("STUDENT_EMAIL")

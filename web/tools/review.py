@@ -19,7 +19,7 @@ def _consented(student, mentor_email):
 def _tutor_only(chat):
     """True when every model that spoke in this chat is the tutor.
 
-    Chats made with the review model hold other students' transcripts and must
+    Chats made with the reviewer model hold other students' transcripts and must
     never be reviewable, whoever owns them."""
     data = chat.chat or {}
     models = set(data.get("models") or [])

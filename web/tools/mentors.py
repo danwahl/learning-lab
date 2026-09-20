@@ -1,6 +1,6 @@
 """
 title: Mentors
-description: Lets a student choose who may review her tutoring chats.
+description: Lets a student choose who may review their tutoring chats.
 """
 
 from open_webui.models.users import Users
@@ -28,7 +28,7 @@ class Tools:
         """
         Allow a person to review all of this learner's tutoring chats. Confirm
         with the learner before calling: the mentor will be able to read every
-        chat she has with the tutor, past and future, until removed.
+        chat they have with the tutor, past and future, until removed.
 
         :param email: The mentor's login email on this site.
         """
