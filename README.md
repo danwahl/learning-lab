@@ -108,7 +108,7 @@ Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. New students: appr
 
 ## Branding
 
-`WEBUI_NAME` sets the name (this version appends " (Open WebUI)"). The icons in `web/icons/` are bind-mounted read-only over the bundled ones in `compose.yaml`; the app recopies its own on every boot, so the mounts log a few harmless "Read-only file system" errors at startup. To change the icon, regenerate the sizes from a square PNG with Pillow (sizes in the filenames; `favicon.ico` holds 16 to 256). Open WebUI's license allows rebranding for deployments with 50 or fewer users in a 30-day period.
+`WEBUI_NAME` sets the name (this version appends " (Open WebUI)"). The icons in `web/icons/` are bind-mounted read-only over the bundled ones in `compose.yaml`; the app recopies its own on every boot, so the mounts log a few harmless "Read-only file system" errors at startup. To change the icon: `scripts/icons.py new.png` (needs Pillow), commit, deploy, then `docker compose up -d --force-recreate` so the mounts pick up the new files. Open WebUI's license allows rebranding for deployments with 50 or fewer users in a 30-day period.
 
 ## Open WebUI settings that matter
 
