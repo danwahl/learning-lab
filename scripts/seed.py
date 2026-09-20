@@ -7,10 +7,11 @@ from .env (or the environment); passwords are prompted for when unset.
 
 Steps, in order: admin account (signup on first boot, else signin) ->
 OpenRouter connection restricted to TUTOR_MODEL -> base model hidden from the
-picker but readable by the students group -> skills from dist/skills ->
-tools from web/tools -> workspace models "tutor" (rendered system prompt,
-memory, skills, mentors tool; the default) and "review" (review prompt,
-review tool) -> student account in the students group -> signup closed.
+picker but readable by every user -> skills from dist/skills -> tools from
+web/tools -> workspace models "tutor" (rendered system prompt, memory, skills,
+mentors tool; the default) and "review" (review prompt, review tool) ->
+optional STUDENT_* test account -> signup open, new accounts pending until an
+admin approves them.
 """
 
 import argparse
@@ -29,7 +30,6 @@ DIST = REPO / "dist"
 MODEL_ID = "tutor"
 REVIEW_ID = "review"
 TOOLS = REPO / "web" / "tools"
-GROUP = "students"
 SUGGESTIONS = [
     "I want to learn how to factor quadratics",
     "Quiz me on what we did last time",
@@ -96,7 +96,6 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--url", default="http://127.0.0.1:3000")
     p.add_argument("--env", default=REPO / ".env", type=Path)
-    p.add_argument("--keep-signup-open", action="store_true", help="don't disable signup at the end")
     args = p.parse_args()
     env = load_env(args.env)
 
@@ -128,13 +127,14 @@ def main():
     })
     print(f"connection {base_url} -> {model}")
 
-    # 3. students group
-    groups = {g["name"]: g for g in api.get("/api/v1/groups/")}
-    group = groups.get(GROUP) or api.post("/api/v1/groups/create", {"name": GROUP, "description": "Learners who get the tutor preset."})
-    grants = [{"principal_type": "group", "principal_id": group["id"], "permission": "read"}]
-    print(f"group {GROUP} ({group['id']})")
+    # 3. everything below is readable by every signed-in user
+    grants = [{"principal_type": "user", "principal_id": "*", "permission": "read"}]
+    for g in api.get("/api/v1/groups/"):
+        if g["name"] == "students":  # earlier deployments scoped access to this group
+            api.call("DELETE", f"/api/v1/groups/id/{g['id']}/delete")
+            print("deleted the old students group")
 
-    # 4. base model: readable by students (a preset needs its base), hidden from the picker
+    # 4. base model: readable (a preset needs its base), hidden from the picker
     def upsert_model(form):
         if api.get("/api/v1/models/model?id=" + urllib.parse.quote(form["id"]), missing=(404,)):
             api.post("/api/v1/models/model/update", form)
@@ -143,7 +143,7 @@ def main():
         api.post("/api/v1/models/model/access/update", {"id": form["id"], "access_grants": grants})
 
     upsert_model({"id": model, "base_model_id": None, "name": model, "meta": {"hidden": True}, "params": {}, "access_grants": grants})
-    print(f"base model {model} hidden, readable by {GROUP}")
+    print(f"base model {model} hidden")
 
     # 5. skills
     skill_ids = []
@@ -211,24 +211,20 @@ def main():
     api.post("/api/v1/configs/models", cfg)
     print(f"models {MODEL_ID} (default, {len(system_prompt.split())} words of system prompt) and {REVIEW_ID}, base {model}")
 
-    # 8. student
+    # 8. optional test student, already approved
     student_email = env.get("STUDENT_EMAIL")
     if student_email:
         users = api.get("/api/v1/users/search?query=" + urllib.parse.quote(student_email))["users"]
-        user = next((u for u in users if u["email"] == student_email.lower()), None)
-        if not user:
+        if not any(u["email"] == student_email.lower() for u in users):
             pw = env.get("STUDENT_PASSWORD") or getpass.getpass(f"password for {student_email}: ")
-            user = api.post("/api/v1/auths/add", {"name": env.get("STUDENT_NAME") or "Student", "email": student_email, "password": pw, "role": "user"})
+            api.post("/api/v1/auths/add", {"name": env.get("STUDENT_NAME") or "Student", "email": student_email, "password": pw, "role": "user"})
             print(f"created user {student_email}")
-        api.post(f"/api/v1/groups/id/{group['id']}/users/add", {"user_ids": [user["id"]]})
-        print(f"{student_email} in {GROUP}")
 
-    # 9. close the door
-    if not args.keep_signup_open:
-        admin = api.get("/api/v1/auths/admin/config")
-        admin["ENABLE_SIGNUP"] = False
-        api.post("/api/v1/auths/admin/config", admin)
-        print("signup disabled")
+    # 9. the door: anyone can sign up, nobody gets in until an admin approves
+    admin = api.get("/api/v1/auths/admin/config")
+    admin.update({"ENABLE_SIGNUP": True, "DEFAULT_USER_ROLE": "pending"})
+    api.post("/api/v1/auths/admin/config", admin)
+    print("signup open, new accounts pending")
 
 
 if __name__ == "__main__":

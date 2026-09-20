@@ -70,7 +70,7 @@ submodule, then `scripts/seed.py` to push the result.
 ```bash
 cp .env.example .env
 sed -i "s/^WEBUI_SECRET_KEY=.*/WEBUI_SECRET_KEY=$(openssl rand -hex 32)/" .env
-# fill in OPENAI_API_KEY, ADMIN_*, STUDENT_*
+# fill in OPENAI_API_KEY, ADMIN_*, and STUDENT_* for a test account
 # local run: set WEBUI_URL and CORS_ALLOW_ORIGIN to http://localhost:3000
 #            and both *_COOKIE_SECURE to False
 docker compose up -d
@@ -79,17 +79,18 @@ docker compose up -d
 ```
 
 `seed.py` registers the admin (first account), points the OpenRouter
-connection at `TUTOR_MODEL` only, hides the base model from the picker while
-keeping it readable by the `students` group, creates the skills, the tools,
-and the "Tutor" and "Review" models, makes Tutor the default, creates the
-student in the group, and turns signup off. Every step creates or
+connection at `TUTOR_MODEL` only, hides the base model from the picker,
+creates the skills, the tools, and the "Tutor" and "Review" models readable by
+every user, makes Tutor the default, creates the `STUDENT_*` test account if
+set, and opens signup with new accounts pending. Every step creates or
 updates, so re-run it after a render. `--help` lists the flags (`--url`,
-`--env`, `--keep-signup-open`).
+`--env`).
 
-The student sees a login form (no signup), two models, no chat controls,
-no system-prompt or parameter editing, no code interpreter, notes, arena, web
-search or image generation. The admin can read all chats
-(`ENABLE_ADMIN_CHAT_ACCESS`, default true); tell the student.
+Students sign up at the URL and wait until an admin sets them to "user" in
+Admin > Users. A student sees two models, no chat controls, no system-prompt
+or parameter editing, no code interpreter, notes, arena, web search or image
+generation. The admin can read all chats (`ENABLE_ADMIN_CHAT_ACCESS`, default
+true); tell the students.
 
 ## Mentors
 
@@ -101,8 +102,7 @@ chats only if her record lists the mentor, and only chats made with Tutor,
 so a mentor's own Review chats stay hidden from whoever mentors them.
 "Remove dan@example.com" revokes it. Both checks are in
 `web/tools/review.py`, not in the prompt. Chats made with the old "cord"
-model are not reviewable. More accounts: Admin > Users, then add them to
-`students`.
+model are not reviewable. A mentor needs an approved account of their own.
 
 ## Exposure (scandium)
 
@@ -118,8 +118,9 @@ Public URL: `https://scandium.dinosaur-cloud.ts.net:10000` (matches `WEBUI_URL`
 and `CORS_ALLOW_ORIGIN` in `.env`). Funnel must be allowed for this node in
 the tailnet policy.
 
-Security on that URL is: the login form, signup off, a long student password
-(Open WebUI has no login rate limiting), and a spend limit on the OpenRouter key.
+Security on that URL is: the login form, admin approval of new accounts,
+whatever passwords students pick (Open WebUI has no login rate limiting), and
+a spend limit on the OpenRouter key.
 
 ## Operations
 
@@ -130,11 +131,10 @@ docker run --rm -v learning-lab_data:/data -v "$PWD":/backup alpine \
   tar czf /backup/learning-lab-data-$(date +%F).tgz -C /data .   # backup
 ```
 
-Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. Another
-student: change `STUDENT_*` in `.env` and re-run, or Admin > Users, then add
-to `students`. Another skill: add it to the plugin, render, seed. Another
-tool: a file in `web/tools/` and its id in the right model's `toolIds` in
-`seed.py`.
+Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. New students:
+approve them in Admin > Users. Another skill: add it to the plugin, render,
+seed. Another tool: a file in `web/tools/` and its id in the right model's
+`toolIds` in `seed.py`.
 
 ## Open WebUI settings that matter
 
