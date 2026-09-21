@@ -2,7 +2,7 @@
 """Configure a fresh (or existing) Open WebUI instance for the tutor.
 
 Idempotent: every step creates or updates. Run after `scripts/render.sh`.
-Reads OPENAI_API_BASE_URL / OPENAI_API_KEY / TUTOR_MODEL / ADMIN_* / STUDENT_*
+Reads OPENAI_API_BASE_URL / OPENAI_API_KEY / TUTOR_MODEL / TTS_* / ADMIN_* / STUDENT_*
 from .env (or the environment); passwords are prompted for when unset.
 
 Steps, in order: admin account (signup on first boot, else signin) ->
@@ -10,8 +10,8 @@ OpenRouter connection restricted to TUTOR_MODEL -> base model hidden from the
 picker but readable by every user -> skills from dist/skills -> tools from
 web/tools -> workspace models "tutor" (rendered system prompt, memory, skills,
 mentors tool; the default) and "reviewer" (reviewer prompt, review tool) ->
-optional STUDENT_* test account -> signup open, new accounts pending until an
-admin approves them.
+optional STUDENT_* test account -> read-aloud voice (TTS_MODEL on OpenRouter) ->
+signup open, new accounts pending until an admin approves them.
 """
 
 import argparse
@@ -50,7 +50,7 @@ def load_env(path):
             if "=" in line:
                 k, v = line.split("=", 1)
                 env[k.strip()] = v.strip()
-    env.update({k: v for k, v in os.environ.items() if k.startswith(("ADMIN_", "STUDENT_", "TUTOR_", "OPENAI_"))})
+    env.update({k: v for k, v in os.environ.items() if k.startswith(("ADMIN_", "STUDENT_", "TUTOR_", "TTS_", "OPENAI_"))})
     return env
 
 
@@ -225,7 +225,18 @@ def main():
             api.post("/api/v1/auths/add", {"name": env.get("STUDENT_NAME") or "Student", "email": student_email, "password": pw, "role": "user"})
             print(f"created user {student_email}")
 
-    # 9. the door: anyone can sign up, nobody gets in until an admin approves
+    # 9. read-aloud voice through the same OpenRouter key; TTS_MODEL empty means the browser's own voices
+    tts_model = env.get("TTS_MODEL")
+    audio = api.get("/api/v1/audio/config")
+    if tts_model:
+        audio["tts"].update({"ENGINE": "openai", "OPENAI_API_BASE_URL": base_url, "OPENAI_API_KEY": api_key, "MODEL": tts_model,
+                             "VOICE": env.get("TTS_VOICE", ""), "OPENAI_PARAMS": {"response_format": "mp3"}})  # OpenRouter defaults to pcm, which the browser cannot play
+    else:
+        audio["tts"]["ENGINE"] = ""
+    api.post("/api/v1/audio/config/update", audio)
+    print(f"tts {tts_model or 'browser'}")
+
+    # 10. the door: anyone can sign up, nobody gets in until an admin approves
     admin = api.get("/api/v1/auths/admin/config")
     admin.update({"ENABLE_SIGNUP": True, "DEFAULT_USER_ROLE": "pending"})
     api.post("/api/v1/auths/admin/config", admin)

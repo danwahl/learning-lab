@@ -22,12 +22,13 @@ ENV = REPO / "tests" / ".env"
 MODEL = "stub-model"
 ADMIN = ("admin@example.com", "admin-password-for-tests")
 STUDENT = ("student@example.com", "student-password-for-tests")
-SEED_KEYS = ("ADMIN_", "STUDENT_", "TUTOR_", "OPENAI_")  # seed.py reads these from the environment too
+SEED_KEYS = ("ADMIN_", "STUDENT_", "TUTOR_", "TTS_", "OPENAI_")  # seed.py reads these from the environment too
 CLEAN_ENV = {k: v for k, v in os.environ.items() if not k.startswith(SEED_KEYS)}
 OVERRIDES = {
     "WEBUI_SECRET_KEY": "not-a-secret",
     "OPENAI_API_KEY": "stub",
     "OPENAI_API_BASE_URL": "http://127.0.0.1:8081/v1",
+    "TTS_MODEL": "hexgrad/kokoro-82m",
     "WEBUI_URL": URL, "CORS_ALLOW_ORIGIN": URL,
     "WEBUI_SESSION_COOKIE_SECURE": "False", "WEBUI_AUTH_COOKIE_SECURE": "False",
     "TUTOR_MODEL": MODEL,

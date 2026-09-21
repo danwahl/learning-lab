@@ -3,12 +3,18 @@
 import json
 import urllib.request
 
-from conftest import MODEL, REPO, URL, Api, in_container, seed
+from conftest import MODEL, OVERRIDES, REPO, URL, Api, in_container, seed
 
 
 def test_seed_is_idempotent(instance):
     out = seed()
     assert "models tutor (default" in out and "signup open" in out
+
+
+def test_tts_is_kokoro_over_the_openai_engine(admin):
+    tts = admin.get("/api/v1/audio/config")["tts"]
+    keys = ("ENGINE", "OPENAI_API_BASE_URL", "MODEL", "OPENAI_PARAMS")
+    assert {k: tts[k] for k in keys} == {"ENGINE": "openai", "OPENAI_API_BASE_URL": OVERRIDES["OPENAI_API_BASE_URL"], "MODEL": "hexgrad/kokoro-82m", "OPENAI_PARAMS": {"response_format": "mp3"}}
 
 
 def test_branding(instance):

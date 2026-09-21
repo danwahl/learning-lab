@@ -104,7 +104,7 @@ docker run --rm -v learning-lab_data:/data -v "$PWD":/backup alpine \
   tar czf /backup/learning-lab-data-$(date +%F).tgz -C /data .   # backup
 ```
 
-Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. New students: approve them in Admin > Users. Another skill: add it to the plugin, render, seed. Another tool: a file in `web/tools/` and its id in the right model's `toolIds` in `seed.py`.
+Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. Read-aloud voice: `TTS_MODEL` and `TTS_VOICE` in `.env` pick an OpenRouter text-to-speech model; leave `TTS_MODEL` empty to fall back to the browser's own voices. New students: approve them in Admin > Users. Another skill: add it to the plugin, render, seed. Another tool: a file in `web/tools/` and its id in the right model's `toolIds` in `seed.py`.
 
 ## Branding
 
