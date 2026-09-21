@@ -18,4 +18,7 @@ src = Image.open(sys.argv[1]).convert("RGBA")
 for name, px in SIZES.items():
     src.resize((px, px), Image.LANCZOS).save(OUT / name, optimize=True)
 src.resize((256, 256), Image.LANCZOS).save(OUT / "favicon.ico", sizes=[(s, s) for s in (16, 32, 48, 64, 128, 256)])
-print(f"wrote {len(SIZES) + 1} icons to {OUT}")
+# The Reviewer preset's avatar, which seed.py embeds as a data URI: the same mark in greyscale.
+grey = src.convert("LA").convert("RGBA")
+grey.resize((500, 500), Image.LANCZOS).save(OUT / "reviewer.png", optimize=True)
+print(f"wrote {len(SIZES) + 2} icons to {OUT}")

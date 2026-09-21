@@ -31,7 +31,7 @@ learning-lab/
 ├─ web/adaptations.md  # what changes when the skills run in a web chat
 ├─ web/reviewer.md     # system prompt for the mentor's Reviewer model
 ├─ web/tools/          # Open WebUI tools: mentors.py (consent), review.py (reading)
-├─ web/icons/          # favicon, logo, splash and app icons, mounted over the bundled ones
+├─ web/icons/          # favicon, logo, splash, app and preset icons, mounted over the bundled ones
 ├─ tests/              # pytest against a throwaway instance with a stubbed model
 ├─ scripts/render.sh   # submodules + adaptations -> dist/ (system prompt, skills)
 ├─ scripts/seed.py     # configures a running instance from dist/ and .env
@@ -108,7 +108,7 @@ Model swap: change `TUTOR_MODEL` in `.env`, re-run `seed.py`. New students: appr
 
 ## Branding
 
-`WEBUI_NAME` sets the name (this version appends " (Open WebUI)"). The icons in `web/icons/` are bind-mounted read-only over the bundled ones in `compose.yaml`; the app recopies its own on every boot, so the mounts log a few harmless "Read-only file system" errors at startup. To change the icon: `scripts/icons.py new.png` (needs Pillow), commit, deploy, then `docker compose up -d --force-recreate` so the mounts pick up the new files. Open WebUI's license allows rebranding for deployments with 50 or fewer users in a 30-day period.
+`WEBUI_NAME` sets the name (this version appends " (Open WebUI)"). The icons in `web/icons/` are bind-mounted read-only over the bundled ones in `compose.yaml`; the app recopies its own on every boot, so the mounts log a few harmless "Read-only file system" errors at startup. Tutor's avatar is the favicon; Reviewer's is a greyscale copy of it that `seed.py` embeds in the preset. To change the icon: `scripts/icons.py new.png` (needs Pillow), commit, deploy, then `docker compose up -d --force-recreate` so the mounts pick up the new files. Open WebUI's license allows rebranding for deployments with 50 or fewer users in a 30-day period.
 
 ## Open WebUI settings that matter
 

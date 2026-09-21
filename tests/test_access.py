@@ -1,8 +1,9 @@
 """Seeding, signup, and what an approved user can reach."""
 
 import json
+import urllib.request
 
-from conftest import MODEL, URL, Api, in_container, seed
+from conftest import MODEL, REPO, URL, Api, in_container, seed
 
 
 def test_seed_is_idempotent(instance):
@@ -30,6 +31,8 @@ def test_approved_user_sees_presets_tools_skills(student):
     assert models["tutor"]["name"] == "Tutor" and models["reviewer"]["name"] == "Reviewer"
     assert models["tutor"]["info"]["meta"]["toolIds"] == ["mentors"]
     assert models["reviewer"]["info"]["meta"]["toolIds"] == ["review"]
+    avatar = urllib.request.urlopen(urllib.request.Request(f"{URL}/api/v1/models/model/profile/image?id=reviewer", headers={"Authorization": f"Bearer {student.token}"}))
+    assert avatar.headers["Content-Type"] == "image/png" and avatar.read() == (REPO / "web" / "icons" / "reviewer.png").read_bytes()
     assert {t["id"] for t in student.get("/api/v1/tools/")} == {"mentors", "review"}
     assert len(student.get("/api/v1/skills/")) == 5
 

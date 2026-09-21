@@ -15,6 +15,7 @@ admin approves them.
 """
 
 import argparse
+import base64
 import getpass
 import json
 import os
@@ -198,6 +199,7 @@ def main():
         "name": "Reviewer",
         "meta": {
             "description": "For mentors: read and analyze the tutoring chats of your students.",
+            "profile_image_url": "data:image/png;base64," + base64.b64encode((REPO / "web" / "icons" / "reviewer.png").read_bytes()).decode(),
             "capabilities": {**capabilities, "builtin_tools": False},
             "toolIds": ["review"],
             "suggestion_prompts": [{"content": "What did my student work on this week?"}],
