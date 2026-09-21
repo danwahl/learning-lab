@@ -62,4 +62,4 @@ def test_tutor_chat_carries_prompt_and_tools(student):
 def test_reviewer_chat_carries_review_tools(student):
     system, tools = chat(student, "reviewer")
     assert "Cordell" in system and "mentor" in system and "Persistence" not in system
-    assert tools == {"list_student_chats", "view_student_chat"}
+    assert tools == {"list_students", "list_student_chats", "view_student_chat"}

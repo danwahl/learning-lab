@@ -20,6 +20,7 @@ async def main():
     S, M, O = [(await Users.get_user_by_email(p[k])).model_dump() for k in ("student", "mentor", "other")]
 
     # before consent
+    assert "No student" in await review.list_students(M)
     assert "has not added you" in await review.list_student_chats(S["email"], 7, M)
     assert "not reviewable" in await review.view_student_chat(p["tutor_chat"], M)
     assert "own address" in await mentors.add_mentor(S["email"], S)
@@ -28,6 +29,8 @@ async def main():
     # consent, stored lowercase whatever the learner typed
     assert await mentors.add_mentor(M["email"].upper(), S) == "Mentors: " + M["email"]
     assert await mentors.list_mentors(S) == "Mentors: " + M["email"]
+    assert await review.list_students(M) == f"{S['name']} <{S['email']}>"
+    assert "No student" in await review.list_students(O)
     listing = await review.list_student_chats(S["email"], 7, M)
     assert p["tutor_chat"] in listing
     assert p["reviewer_chat"] not in listing and p["mixed_chat"] not in listing
@@ -38,6 +41,7 @@ async def main():
 
     # revocation
     assert await mentors.remove_mentor(M["email"], S) == "Mentors: none"
+    assert "No student" in await review.list_students(M)
     assert "has not added you" in await review.list_student_chats(S["email"], 7, M)
     assert "not reviewable" in await review.view_student_chat(p["tutor_chat"], M)
     print("ok")

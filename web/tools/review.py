@@ -43,6 +43,14 @@ def _messages(chat):
 
 
 class Tools:
+    async def list_students(self, __user__: dict = None) -> str:
+        """
+        List the students who added you as a mentor, as `Name <email>`.
+        """
+        users = (await Users.get_users())["users"]
+        students = sorted(f"{u.name} <{u.email}>" for u in users if _consented(u, __user__["email"]))
+        return "\n".join(students) or "No student has added you as a mentor yet."
+
     async def list_student_chats(self, student_email: str, since_days: int = 7, __user__: dict = None) -> str:
         """
         List a student's recent tutoring chats. Works only for students who
